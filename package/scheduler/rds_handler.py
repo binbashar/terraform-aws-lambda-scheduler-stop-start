@@ -2,25 +2,26 @@
 
 """rds instances scheduler."""
 
-import logging
+from typing import Iterator
 
 import boto3
 
 from botocore.exceptions import ClientError
 
+from .exceptions import rds_exception
+
 
 class RdsScheduler(object):
     """Abstract rds scheduler in a class."""
 
-    def __init__(self, region_name=None):
+    def __init__(self, region_name=None) -> None:
         """Initialize rds scheduler."""
-        #: Initialize aws rds resource
         if region_name:
             self.rds = boto3.client("rds", region_name=region_name)
         else:
             self.rds = boto3.client("rds")
 
-    def stop(self, tag_key, tag_value):
+    def stop(self, tag_key: str, tag_value: str) -> None:
         """Aws rds cluster and instance stop function.
 
         Stop rds aurora clusters and rds db instances with defined tag.
@@ -34,27 +35,17 @@ class RdsScheduler(object):
             try:
                 self.rds.stop_db_cluster(DBClusterIdentifier=cluster_id)
                 print("Stop rds cluster {0}".format(cluster_id))
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "InvalidDBClusterStateFault":
-                    logging.info("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                rds_exception("rds cluster", cluster_id, exc)
 
         for instance_id in self.list_instances(tag_key, tag_value):
             try:
                 self.rds.stop_db_instance(DBInstanceIdentifier=instance_id)
                 print("Stop rds instance {0}".format(instance_id))
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "InvalidDBInstanceState":
-                    logging.info("%s", e)
-                elif error_code == "InvalidParameterCombination":
-                    logging.info("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                rds_exception("rds instance", instance_id, exc)
 
-    def start(self, tag_key, tag_value):
+    def start(self, tag_key: str, tag_value: str) -> None:
         """Aws rds cluster start function.
 
         Start rds aurora clusters and db instances a with defined tag.
@@ -68,27 +59,17 @@ class RdsScheduler(object):
             try:
                 self.rds.start_db_cluster(DBClusterIdentifier=cluster_id)
                 print("Start rds cluster {0}".format(cluster_id))
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "InvalidDBClusterStateFault":
-                    logging.info("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                rds_exception("rds cluster", cluster_id, exc)
 
         for instance_id in self.list_instances(tag_key, tag_value):
             try:
                 self.rds.start_db_instance(DBInstanceIdentifier=instance_id)
                 print("Start rds instance {0}".format(instance_id))
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "InvalidDBInstanceState":
-                    logging.info("%s", e)
-                elif error_code == "InvalidParameterCombination":
-                    logging.info("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                rds_exception("rds instance", instance_id, exc)
 
-    def list_clusters(self, tag_key, tag_value):
+    def list_clusters(self, tag_key: str, tag_value: str) -> Iterator[str]:
         """Aws rds cluster list function.
 
         Return the list of all rds clusters
@@ -115,7 +96,7 @@ class RdsScheduler(object):
                     if tag["Key"] == tag_key and tag["Value"] == tag_value:
                         yield custer["DBClusterIdentifier"]
 
-    def list_instances(self, tag_key, tag_value):
+    def list_instances(self, tag_key: str, tag_value: str) -> Iterator[str]:
         """Aws rds instance list function.
 
         Return the list of all rds instances

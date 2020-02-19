@@ -1,6 +1,6 @@
 # terraform-aws-lambda-scheduler-stop-start
 
-[![Build Status](https://api.travis-ci.org/diodonfrost/terraform-aws-lambda-scheduler-stop-start.svg?branch=master)](https://travis-ci.org/diodonfrost/terraform-aws-lambda-scheduler-stop-start)
+[![Build Status](https://api.travis-ci.com/diodonfrost/terraform-aws-lambda-scheduler-stop-start.svg?branch=master)](https://travis-ci.com/diodonfrost/terraform-aws-lambda-scheduler-stop-start)
 
 Stop and start ec2, rds resources and autoscaling groups with lambda function.
 
@@ -78,6 +78,7 @@ module "start_ec2_instance" {
 |------|-------------|------|---------|----------|
 | name | Define name to use for lambda function, cloudwatch event and iam role | string | n/a | yes |
 | custom_iam_role_arn | Custom IAM role arn for the scheduling lambda | string | null | no |
+| kms_key_arn | The ARN for the KMS encryption key. If this configuration is not provided when environment variables are in use, AWS Lambda uses a default service key | string | null | no |
 | aws_regions | A list of one or more aws regions where the lambda will be apply, default use the current region | list | null | no |
 | cloudwatch_schedule_expression | The scheduling expression | string | `"cron(0 22 ? * MON-FRI *)"` | yes |
 | schedule_action | Define schedule action to apply on resources | string | `"stop"` | yes |
@@ -98,6 +99,8 @@ module "start_ec2_instance" {
 | scheduler_lambda_invoke_arn | The ARN to be used for invoking Lambda function from API Gateway |
 | scheduler_lambda_function_last_modified | The date Lambda function was last modified |
 | scheduler_lambda_function_version | Latest published version of your Lambda function |
+| scheduler_log_group_name | The name of the scheduler log group |
+| scheduler_log_group_arn | The Amazon Resource Name (ARN) specifying the log group |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
@@ -124,7 +127,7 @@ python3 -m pip install boto3 pytest pytest-cov pytest-xdist
 python3 -m pytest -n 4 --cov=package tests/integration/test_ec2_scheduler.py
 
 # Test python code use by spot scheduler scheduler
-python3 -m pytest -n 2--cov=package tests/integration/test_spot_scheduler.py
+python3 -m pytest -n 2 --cov=package tests/integration/test_spot_scheduler.py
 
 # Test python code use by autoscaling scheduler
 python3 -m pytest -n 4 --cov=package tests/integration/test_asg_scheduler.py
@@ -149,13 +152,13 @@ go get ./...
 
 ```shell
 # Test ec2 scheduler
-go test -v tests/end-to-end/ec2_scheduler_test.go
+go test -timeout 900s -v tests/end-to-end/ec2_scheduler_test.go
 
 # Test spot scheduler
-go test -v tests/end-to-end/spot_scheduler_test.go
+go test -timeout 900s -v tests/end-to-end/spot_scheduler_test.go
 
 # Test autoscaling scheduler
-go test -v tests/end-to-end/autoscaling_scheduler_test.go
+go test -timeout 900s -v tests/end-to-end/autoscaling_scheduler_test.go
 ```
 
 ## Authors

@@ -2,25 +2,26 @@
 
 """ec2 instances scheduler."""
 
-import logging
+from typing import Iterator
 
 import boto3
 
 from botocore.exceptions import ClientError
 
+from .exceptions import ec2_exception
+
 
 class Ec2Scheduler(object):
     """Abstract ec2 scheduler in a class."""
 
-    def __init__(self, region_name=None):
+    def __init__(self, region_name=None) -> None:
         """Initialize autoscaling scheduler."""
-        #: Initialize aws ec2 resource
         if region_name:
             self.ec2 = boto3.client("ec2", region_name=region_name)
         else:
             self.ec2 = boto3.client("ec2")
 
-    def stop(self, tag_key, tag_value):
+    def stop(self, tag_key: str, tag_value: str) -> None:
         """Aws ec2 instance stop function.
 
         Stop ec2 instances with defined tag.
@@ -34,13 +35,10 @@ class Ec2Scheduler(object):
             try:
                 self.ec2.stop_instances(InstanceIds=[ec2_instance])
                 print("Stop instances {0}".format(ec2_instance))
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "UnsupportedOperation":
-                    logging.warning("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                ec2_exception("instance", ec2_instance, exc)
 
-    def start(self, tag_key, tag_value):
+    def start(self, tag_key: str, tag_value: str) -> None:
         """Aws ec2 instance start function.
 
         Start ec2 instances with defined tag.
@@ -54,14 +52,10 @@ class Ec2Scheduler(object):
             try:
                 self.ec2.start_instances(InstanceIds=[ec2_instance])
                 print("Start instances {0}".format(ec2_instance))
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "UnsupportedOperation":
-                    logging.warning("%s", e)
-                else:
-                    logging.error("Unexpected error: %s", e)
+            except ClientError as exc:
+                ec2_exception("instance", ec2_instance, exc)
 
-    def list_instances(self, tag_key, tag_value):
+    def list_instances(self, tag_key: str, tag_value: str) -> Iterator[str]:
         """Aws ec2 instance list function.
 
         List name of all ec2 instances all ec2 instances
