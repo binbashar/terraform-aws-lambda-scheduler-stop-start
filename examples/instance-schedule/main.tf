@@ -1,18 +1,16 @@
 # Terraform ec2 instance with lambda scheduler
+data "aws_region" "current" {}
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
-
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
   owners = ["099720109477"] # Canonical
 }
 
@@ -20,7 +18,6 @@ resource "aws_instance" "scheduled" {
   count         = "3"
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-
   tags = {
     tostop        = "true"
     terratest_tag = var.random_tag
@@ -31,12 +28,12 @@ resource "aws_instance" "not_scheduled" {
   count         = "2"
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-
   tags = {
     tostop        = "false"
     terratest_tag = var.random_tag
   }
 }
+
 
 ### Terraform modules ###
 

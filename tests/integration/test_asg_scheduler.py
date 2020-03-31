@@ -2,8 +2,10 @@
 
 import boto3
 import time
+from random import randint
 
 from package.scheduler.autoscaling_handler import AutoscalingScheduler
+from package.scheduler.cloudwatch_handler import CloudWatchAlarmScheduler
 
 from .fixture import launch_asg
 
@@ -20,12 +22,13 @@ import pytest
 def test_stop_asg_scheduler(aws_region, tag_key, tag_value, result_count):
     """Verify stop asg scheduler class method."""
     client = boto3.client("autoscaling", region_name=aws_region)
-    launch_conf_name = "lc-test" + str(time.time())[11:]
-    asg_name = "asg-test" + str(time.time())[11:]
+    launch_conf_name = "lc-test" + str(randint(0, 1000000000))
+    asg_name = "asg-test" + str(randint(0, 1000000000))
     launch_asg(aws_region, tag_key, tag_value, launch_conf_name, asg_name)
 
     try:
         asg_scheduler = AutoscalingScheduler(aws_region)
+        asg_scheduler.cloudwatch_alarm = CloudWatchAlarmScheduler(aws_region)
         asg_scheduler.stop("tostop-asg-test-1", "true")
 
         suspend_process = client.describe_auto_scaling_groups(
@@ -52,13 +55,14 @@ def test_stop_asg_scheduler(aws_region, tag_key, tag_value, result_count):
 def test_start_asg_scheduler(aws_region, tag_key, tag_value, result_count):
     """Verify start asg scheduler class method."""
     client = boto3.client("autoscaling", region_name=aws_region)
-    launch_conf_name = "lc-test" + str(time.time())[11:]
-    asg_name = "asg-test" + str(time.time())[11:]
+    launch_conf_name = "lc-test" + str(randint(0, 1000000000))
+    asg_name = "asg-test" + str(randint(0, 1000000000))
     launch_asg(aws_region, tag_key, tag_value, launch_conf_name, asg_name)
 
     try:
         client.suspend_processes(AutoScalingGroupName=asg_name)
         asg_scheduler = AutoscalingScheduler(aws_region)
+        asg_scheduler.cloudwatch_alarm = CloudWatchAlarmScheduler(aws_region)
         asg_scheduler.start("tostop-asg-test-2", "true")
 
         suspend_process = client.describe_auto_scaling_groups(

@@ -13,7 +13,7 @@ import (
 )
 
 // Test Terraform ec2 scheduler module
-func TestTerraformAwsEc2Scheduler(t *testing.T) {
+func TestTerraformAwsInstanceScheduler(t *testing.T) {
 	t.Parallel()
 
 	// Pick aws region Ireland
@@ -24,7 +24,7 @@ func TestTerraformAwsEc2Scheduler(t *testing.T) {
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
-		TerraformDir: "../../examples/ec2-schedule",
+		TerraformDir: "../../examples/instance-schedule",
 
 		// Variables to pass to our Terraform code using -var options
 		Vars: map[string]interface{}{

@@ -14,8 +14,9 @@ from .exceptions import ec2_exception
 class AutoscalingScheduler(object):
     """Abstract autoscaling scheduler in a class."""
 
-    def __init__(self, region_name=None) -> None:
+    def __init__(self, region_name=None, cloudwatch_alarm=None) -> None:
         """Initialize autoscaling scheduler."""
+        self.cloudwatch_alarm = cloudwatch_alarm
         if region_name:
             self.ec2 = boto3.client("ec2", region_name=region_name)
             self.asg = boto3.client("autoscaling", region_name=region_name)
@@ -39,6 +40,7 @@ class AutoscalingScheduler(object):
 
         for asg_name in asg_list:
             try:
+                self.cloudwatch_alarm.disable(asg_name)
                 self.asg.suspend_processes(AutoScalingGroupName=asg_name)
                 print("Suspend autoscaling group {0}".format(asg_name))
             except ClientError as exc:
@@ -47,6 +49,7 @@ class AutoscalingScheduler(object):
         # Stop autoscaling instance
         for ec2_instance in instance_list:
             try:
+                self.cloudwatch_alarm.disable(ec2_instance)
                 self.ec2.stop_instances(InstanceIds=[ec2_instance])
                 print("Stop autoscaling instances {0}".format(ec2_instance))
             except ClientError as exc:
@@ -65,21 +68,36 @@ class AutoscalingScheduler(object):
         """
         asg_list = self.list_groups(tag_key, tag_value)
         instance_list = self.list_instances(asg_list)
-
-        for asg_name in asg_list:
-            try:
-                self.asg.resume_processes(AutoScalingGroupName=asg_name)
-                print("Resume autoscaling group {0}".format(asg_name))
-            except ClientError as exc:
-                ec2_exception("autoscaling group", asg_name, exc)
+        instance_running_ids = []
 
         # Start autoscaling instance
         for ec2_instance in instance_list:
             try:
                 self.ec2.start_instances(InstanceIds=[ec2_instance])
                 print("Start autoscaling instances {0}".format(ec2_instance))
+                self.cloudwatch_alarm.enable(ec2_instance)
             except ClientError as exc:
                 ec2_exception("instance", ec2_instance, exc)
+            else:
+                instance_running_ids.append(ec2_instance)
+
+        if instance_running_ids:
+            try:
+                instance_waiter = self.ec2.get_waiter("instance_running")
+                instance_waiter.wait(
+                    InstanceIds=instance_running_ids,
+                    WaiterConfig={"Delay": 15, "MaxAttempts": 15},
+                )
+            except ClientError as exc:
+                ec2_exception("waiter", instance_waiter, exc)
+
+        for asg_name in asg_list:
+            try:
+                self.asg.resume_processes(AutoScalingGroupName=asg_name)
+                print("Resume autoscaling group {0}".format(asg_name))
+                self.cloudwatch_alarm.enable(asg_name)
+            except ClientError as exc:
+                ec2_exception("autoscaling group", asg_name, exc)
 
     def list_groups(self, tag_key: str, tag_value: str) -> List[str]:
         """Aws autoscaling list function.

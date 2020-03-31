@@ -2,7 +2,8 @@
 
 import boto3
 
-from package.scheduler.ec2_handler import Ec2Scheduler
+from package.scheduler.cloudwatch_handler import CloudWatchAlarmScheduler
+from package.scheduler.instance_handler import InstanceScheduler
 
 from .fixture import launch_ec2_instances
 
@@ -34,7 +35,8 @@ def test_stop_ec2_scheduler(aws_region, tag_key, tag_value, result_count):
 
     try:
         client.get_waiter("instance_running").wait(InstanceIds=instance_ids)
-        ec2_scheduler = Ec2Scheduler(aws_region)
+        ec2_scheduler = InstanceScheduler(aws_region)
+        ec2_scheduler.cloudwatch_alarm = CloudWatchAlarmScheduler(aws_region)
         ec2_scheduler.stop("tostop-ec2-test-1", "true")
         if tag_key == "tostop-ec2-test-1" and tag_value == "true":
             client.get_waiter("instance_stopped").wait(
@@ -76,7 +78,8 @@ def test_start_ec2_scheduler(aws_region, tag_key, tag_value, result_count):
         client.get_waiter("instance_running").wait(InstanceIds=instance_ids)
         client.stop_instances(InstanceIds=instance_ids)
         client.get_waiter("instance_stopped").wait(InstanceIds=instance_ids)
-        ec2_scheduler = Ec2Scheduler(aws_region)
+        ec2_scheduler = InstanceScheduler(aws_region)
+        ec2_scheduler.cloudwatch_alarm = CloudWatchAlarmScheduler(aws_region)
         ec2_scheduler.start("tostop-ec2-test-2", "true")
         if tag_key == "tostop-ec2-test-2" and tag_value == "true":
             client.get_waiter("instance_running").wait(
