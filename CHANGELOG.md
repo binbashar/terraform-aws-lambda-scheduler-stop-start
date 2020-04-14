@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Improve instance scheduler unit tests
+- Cloudwatch integration tests
+
+### Changed
+- Do not schedule asg instances with ec2 instance scheduler
+
 ## [2.7.0] - 2020-03-31
 ### Changed
 - Schedule Cloudwatch alarms with aws tags

@@ -12,8 +12,8 @@ If you are using Terraform 0.11 you can use versions v1.*.
 ## Future version v3.*
 
 *  Multi aws tags support (backward compatibility)
+*  Use bool type for scheduler service variable (backward compatibility)
 *  Terminate action for autoscaling group instance 
-*  Python type hints
 
 ## Features
 
@@ -133,8 +133,11 @@ python3 -m pytest -n 4 --cov=package tests/integration/test_asg_scheduler.py
 # Test python code use by rds scheduler
 python3 -m pytest -n 8 --cov=package tests/integration/test_rds_scheduler.py
 
+# Test pythn code use by cloudwatch alarm scheduler
+python3 -m pytest -n 12 --cov=package tests/integration/test_cloudwatch_alarm_scheduler.py
+
 # Test all python code
-python3 -m pytest -n 18 --cov=package tests/integration/
+python3 -m pytest -n 30 --cov=package tests/integration/
 ```
 
 ### End-to-end tests
