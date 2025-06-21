@@ -145,6 +145,7 @@ No modules.
 | <a name="input_documentdb_schedule"></a> [documentdb\_schedule](#input\_documentdb\_schedule) | Enable scheduling on documentdb resources | `bool` | `false` | no |
 | <a name="input_ec2_schedule"></a> [ec2\_schedule](#input\_ec2\_schedule) | Enable scheduling on ec2 resources | `bool` | `false` | no |
 | <a name="input_ecs_schedule"></a> [ecs\_schedule](#input\_ecs\_schedule) | Enable scheduling on ecs services | `bool` | `false` | no |
+| <a name="input_exclusion_dates"></a> [exclusion\_dates](#input\_exclusion\_dates) | Comma-separated list of dates in MM-DD format when scheduler should not run (e.g., '12-25,01-01,07-04') | `string` | `""` | no |
 | <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | The ARN for the KMS encryption key. If this configuration is not provided when environment variables are in use, AWS Lambda uses a default service key. | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Define name to use for lambda function, cloudwatch event and iam role | `string` | n/a | yes |
 | <a name="input_rds_schedule"></a> [rds\_schedule](#input\_rds\_schedule) | Enable scheduling on rds resources | `bool` | `false` | no |
@@ -154,7 +155,8 @@ No modules.
 | <a name="input_schedule_action"></a> [schedule\_action](#input\_schedule\_action) | Define schedule action to apply on resources, accepted value are 'stop or 'start | `string` | `"stop"` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | Define the aws event rule schedule expression, https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html | `string` | `"cron(0 22 ? * MON-FRI *)"` | no |
 | <a name="input_schedule_expression_timezone"></a> [schedule\_expression\_timezone](#input\_schedule\_expression\_timezone) | Timezone in which the scheduling expression is evaluated. Example : 'America/New\_York', 'Europe/Paris' | `string` | `"UTC"` | no |
-| <a name="input_scheduler_tag"></a> [scheduler\_tag](#input\_scheduler\_tag) | Set the tag to use for identify aws resources to stop or start | `map(string)` | <pre>{<br/>  "key": "tostop",<br/>  "value": "true"<br/>}</pre> | no |
+| <a name="input_scheduler_excluded_dates"></a> [scheduler\_excluded\_dates](#input\_scheduler\_excluded\_dates) | List of specific dates to exclude from scheduling in MM-DD format (e.g., ['12-25', '01-01']) | `list(string)` | `[]` | no |
+| <a name="input_scheduler_tag"></a> [scheduler\_tag](#input\_scheduler\_tag) | Set the tag to use for identify aws resources to stop or start | `map(string)` | <pre>{<br>  "key": "tostop",<br>  "value": "true"<br>}</pre> | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Custom tags on aws resources | `map(any)` | `null` | no |
 | <a name="input_transfer_schedule"></a> [transfer\_schedule](#input\_transfer\_schedule) | Enable scheduling on AWS Transfer (SFTP) servers | `bool` | `false` | no |
 
