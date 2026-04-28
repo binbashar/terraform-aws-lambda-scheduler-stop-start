@@ -45,10 +45,15 @@ output "scheduler_log_group_arn" {
 
 output "scheduler_expression" {
   description = "The expression of the scheduler"
-  value       = aws_scheduler_schedule.this.schedule_expression
+  value       = var.schedule_expression != "none" ? aws_scheduler_schedule.this[0].schedule_expression : "none"
 }
 
 output "scheduler_timezone" {
   description = "The timezone of the scheduler"
-  value       = aws_scheduler_schedule.this.schedule_expression_timezone
+  value       = var.schedule_expression != "none" ? aws_scheduler_schedule.this[0].schedule_expression_timezone : "none"
+}
+
+output "http_trigger" {
+  description = "The HTTP trigger URL if enabled, 'none' otherwise"
+  value       = var.http_trigger ? aws_lambda_function_url.http_trigger[0].function_url : "none"
 }

@@ -41,6 +41,8 @@ resource "aws_lambda_function" "this" {
 }
 
 resource "aws_scheduler_schedule" "this" {
+  count = var.schedule_expression != "none" ? 1 : 0
+
   name                         = "trigger-lambda-scheduler-${var.name}"
   description                  = "Trigger lambda scheduler"
   schedule_expression          = var.schedule_expression
@@ -52,6 +54,12 @@ resource "aws_scheduler_schedule" "this" {
 
   target {
     arn      = aws_lambda_function.this.arn
-    role_arn = aws_iam_role.scheduler_lambda.arn
+    role_arn = aws_iam_role.scheduler_lambda[0].arn
   }
+}
+
+resource "aws_lambda_function_url" "http_trigger" {
+  count              = var.http_trigger ? 1 : 0
+  function_name      = aws_lambda_function.this.function_name
+  authorization_type = var.http_trigger_authorization_type
 }

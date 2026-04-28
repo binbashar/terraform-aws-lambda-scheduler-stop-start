@@ -1,7 +1,7 @@
 # Terraform variables file
 
 variable "schedule_expression" {
-  description = "Define the aws event rule schedule expression, https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html"
+  description = "Define the aws event rule schedule expression ('none' to disable the schedule), https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html"
   type        = string
   default     = "cron(0 22 ? * MON-FRI *)"
 }
@@ -10,6 +10,23 @@ variable "schedule_expression_timezone" {
   description = "Timezone in which the scheduling expression is evaluated. Example : 'America/New_York', 'Europe/Paris'"
   type        = string
   default     = "UTC"
+}
+
+variable "http_trigger" {
+  description = "Create an http endpoint to trigger the lambda"
+  type        = bool
+  default     = false
+}
+
+variable "http_trigger_authorization_type" {
+  description = "Authorization type for the http endpoint to trigger the lambda ('NONE' or 'AWS_IAM')"
+  type        = string
+  default     = "NONE"
+
+  validation {
+    condition     = contains(["NONE", "AWS_IAM"], var.http_trigger_authorization_type)
+    error_message = "Authorization type must be 'NONE' or 'AWS_IAM'."
+  }
 }
 
 variable "scheduler_excluded_dates" {

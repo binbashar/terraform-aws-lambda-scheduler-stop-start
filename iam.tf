@@ -228,6 +228,7 @@ locals {
 }
 
 resource "aws_iam_role" "scheduler_lambda" {
+  count              = var.schedule_expression != "none" ? 1 : 0
   name               = "${var.name}-scheduler-lambda-role"
   description        = "Allows scheduler to invoke ${var.name} lambda function"
   assume_role_policy = data.aws_iam_policy_document.scheduler_assume_role_policy.json
@@ -235,8 +236,9 @@ resource "aws_iam_role" "scheduler_lambda" {
 }
 
 resource "aws_iam_role_policy_attachment" "scheduler_lambda" {
-  role       = aws_iam_role.scheduler_lambda.name
-  policy_arn = aws_iam_policy.scheduler_lambda.arn
+  count      = var.schedule_expression != "none" ? 1 : 0
+  role       = aws_iam_role.scheduler_lambda[0].name
+  policy_arn = aws_iam_policy.scheduler_lambda[0].arn
 }
 
 data "aws_iam_policy_document" "scheduler_assume_role_policy" {
@@ -251,7 +253,8 @@ data "aws_iam_policy_document" "scheduler_assume_role_policy" {
 }
 
 resource "aws_iam_policy" "scheduler_lambda" {
-  name = "${var.name}-Scheduler-Lambda-Policy"
+  count = var.schedule_expression != "none" ? 1 : 0
+  name  = "${var.name}-Scheduler-Lambda-Policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
