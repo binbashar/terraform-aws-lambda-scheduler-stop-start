@@ -13,7 +13,8 @@ If you are using Terraform 0.11 you can use versions v1.*.
 
 ## Features
 
-*  Aws lambda runtine Python 3.7
+*  AWS Lambda runtime Python 3.13
+*  HTTP endpoint trigger for manual or on-demand invocation
 *  ec2 instances scheduling
 *  ecs service scheduling
 *  rds clusters scheduling
@@ -62,6 +63,23 @@ module "start_ec2_instance" {
   rds_schedule              = "false"
   redshift_schedule         = "false"
   cloudwatch_alarm_schedule = "false"
+  scheduler_tag = {
+    key   = "tostop"
+    value = "true"
+  }
+}
+
+# HTTP-only trigger — no cron schedule, invoke manually via the returned URL
+module "stop_ec2_on_demand" {
+  source  = "diodonfrost/lambda-scheduler-stop-start/aws"
+  version = "x.x.x"
+
+  name                            = "ec2_stop_on_demand"
+  schedule_expression             = "none"
+  schedule_action                 = "stop"
+  ec2_schedule                    = "true"
+  http_trigger                    = true
+  http_trigger_authorization_type = "AWS_IAM"
   scheduler_tag = {
     key   = "tostop"
     value = "true"
@@ -117,6 +135,7 @@ No modules.
 | [aws_iam_role_policy.transfer_scheduler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy_attachment.scheduler_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_lambda_function.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_lambda_function_url.http_trigger](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function_url) | resource |
 | [aws_scheduler_schedule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/scheduler_schedule) | resource |
 | [archive_file.this](https://registry.terraform.io/providers/hashicorp/archive/2.3.0/docs/data-sources/file) | data source |
 | [aws_iam_policy_document.autoscaling_group_scheduler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -146,6 +165,8 @@ No modules.
 | <a name="input_ec2_schedule"></a> [ec2\_schedule](#input\_ec2\_schedule) | Enable scheduling on ec2 resources | `bool` | `false` | no |
 | <a name="input_ecs_schedule"></a> [ecs\_schedule](#input\_ecs\_schedule) | Enable scheduling on ecs services | `bool` | `false` | no |
 | <a name="input_exclusion_dates"></a> [exclusion\_dates](#input\_exclusion\_dates) | Comma-separated list of dates in MM-DD format when scheduler should not run (e.g., '12-25,01-01,07-04') | `string` | `""` | no |
+| <a name="input_http_trigger"></a> [http\_trigger](#input\_http\_trigger) | Create an http endpoint to trigger the lambda | `bool` | `false` | no |
+| <a name="input_http_trigger_authorization_type"></a> [http\_trigger\_authorization\_type](#input\_http\_trigger\_authorization\_type) | Authorization type for the http endpoint to trigger the lambda ('NONE' or 'AWS\_IAM') | `string` | `"NONE"` | no |
 | <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | The ARN for the KMS encryption key. If this configuration is not provided when environment variables are in use, AWS Lambda uses a default service key. | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Define name to use for lambda function, cloudwatch event and iam role | `string` | n/a | yes |
 | <a name="input_rds_schedule"></a> [rds\_schedule](#input\_rds\_schedule) | Enable scheduling on rds resources | `bool` | `false` | no |
@@ -153,7 +174,7 @@ No modules.
 | <a name="input_resources_tag"></a> [resources\_tag](#input\_resources\_tag) | DEPRECATED, use scheduler\_tag variable instead | `map(string)` | `null` | no |
 | <a name="input_runtime"></a> [runtime](#input\_runtime) | The runtime environment for the Lambda function that you are uploading | `string` | `"python3.13"` | no |
 | <a name="input_schedule_action"></a> [schedule\_action](#input\_schedule\_action) | Define schedule action to apply on resources, accepted value are 'stop or 'start | `string` | `"stop"` | no |
-| <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | Define the aws event rule schedule expression, https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html | `string` | `"cron(0 22 ? * MON-FRI *)"` | no |
+| <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | Define the aws event rule schedule expression ('none' to disable the schedule), https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html | `string` | `"cron(0 22 ? * MON-FRI *)"` | no |
 | <a name="input_schedule_expression_timezone"></a> [schedule\_expression\_timezone](#input\_schedule\_expression\_timezone) | Timezone in which the scheduling expression is evaluated. Example : 'America/New\_York', 'Europe/Paris' | `string` | `"UTC"` | no |
 | <a name="input_scheduler_excluded_dates"></a> [scheduler\_excluded\_dates](#input\_scheduler\_excluded\_dates) | List of specific dates to exclude from scheduling in MM-DD format (e.g., ['12-25', '01-01']) | `list(string)` | `[]` | no |
 | <a name="input_scheduler_tag"></a> [scheduler\_tag](#input\_scheduler\_tag) | Set the tag to use for identify aws resources to stop or start | `map(string)` | <pre>{<br>  "key": "tostop",<br>  "value": "true"<br>}</pre> | no |
@@ -165,6 +186,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_lambda_iam_role_arn"></a> [lambda\_iam\_role\_arn](#output\_lambda\_iam\_role\_arn) | The ARN of the IAM role used by Lambda function |
+| <a name="output_http_trigger"></a> [http\_trigger](#output\_http\_trigger) | The HTTP trigger URL if enabled, 'none' otherwise |
 | <a name="output_lambda_iam_role_name"></a> [lambda\_iam\_role\_name](#output\_lambda\_iam\_role\_name) | The name of the IAM role used by Lambda function |
 | <a name="output_scheduler_expression"></a> [scheduler\_expression](#output\_scheduler\_expression) | The expression of the scheduler |
 | <a name="output_scheduler_lambda_arn"></a> [scheduler\_lambda\_arn](#output\_scheduler\_lambda\_arn) | The ARN of the Lambda function |
